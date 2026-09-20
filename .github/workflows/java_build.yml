@@ -1,0 +1,59 @@
+name: Docker Image CI
+
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        description: "Service name (e.g. api-gateway)"
+        required: true
+        type: string
+      service-dir:
+        description: "Service directory relative to repo root (e.g. api-gateway)"
+        required: true
+        type: string
+      ecr-repository:
+        description: "ECR repository name"
+        required: true
+        type: string
+      aws-region:
+        description: "AWS region where ECR lives"
+        required: false
+        type: string
+        default: us-east-1
+      needs-database:
+        description: "Start a PostgreSQL 15 container for integration tests"
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      image-tag:
+        description: "Docker image tag pushed to ECR (format: sha-<7chars>)"
+        value: ${{ jobs.build-and-push.outputs.image_tag }}
+      registry:
+        description: "ECR registry base URL"
+        value: ${{ jobs.build-and-push.outputs.registry }}
+    secrets:
+      AWS_ACCOUNT_ID:
+        required: true
+      SEMGREP_APP_TOKEN:
+        required: false
+      NVD_API_KEY:
+        description: "NIST NVD API key — higher rate limits + faster OWASP NVD updates"
+        required: false
+
+jobs:
+
+  jobs:
+  build-and-push:
+    name: Build · SAST · Scan · Push · Sign (${{ inputs.service-name }})
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write        # OIDC — AWS + Cosign keyless
+      contents: read         # Checkout
+      security-events: write # Upload SARIF (CodeQL, Trivy)
+      actions: read          # Required by CodeQL action
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+      registry:  ${{ steps.login-ecr.outputs.registry }}
+    - uses: actions/checkout@v4
+    
