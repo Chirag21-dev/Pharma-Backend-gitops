@@ -109,5 +109,10 @@ jobs:
           path: ${{ inputs.service-dir }}/target/site/jacoco/
           retention-days: 7
 
+    - name: CodeQL — Analyze
+      uses: github/codeql-action/analyze@v3
+      with:
+          category: /language:java
+
     
     
