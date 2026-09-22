@@ -55,5 +55,20 @@ jobs:
     outputs:
       image_tag: ${{ steps.meta.outputs.image_tag }}
       registry:  ${{ steps.login-ecr.outputs.registry }}
-    - uses: actions/checkout@v4
+    steps:
+    - name: checkout the code
+      uses: actions/checkout@v4
+    - name: Set image tag
+      id: meta
+      run: echo "image_tag=sha-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      # ── Java toolchain ───────────────────────────────────────────────────────
+    - name: Setup Java 17 (Temurin)
+      uses: actions/setup-java@v4
+      with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+    
     
