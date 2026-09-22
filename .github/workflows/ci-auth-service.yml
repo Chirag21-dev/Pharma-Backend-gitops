@@ -28,3 +28,11 @@ jobs:
       aws-region: us-east-1
       needs-database: true
     secrets: inherit
+    
+  deploy-dev:
+    name: Deploy — DEV
+    needs: build
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
