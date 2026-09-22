@@ -1,0 +1,36 @@
+name: CI/CD — inventory-service
+
+# Triggers on push to develop / release branches only.
+# Feature branches and PRs → ci-pr-inventory-service.yml
+# PROD promotion → promote-prod.yml (workflow_dispatch)
+
+on:
+  push:
+    branches: [develop, 'release/**']
+    paths:
+      - 'inventory-service/**'
+      - '.github/workflows/ci-inventory-service.yml'
+
+permissions:
+  id-token: write
+  contents: read
+  security-events: write
+  actions: read
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: inventory-service
+  GITOPS_REPO: ${{ vars.GITOPS_REPO }}
+
+jobs:
+
+  build:
+    name: Build & Security Gates
+    uses: ./.github/workflows/_java-build.yml
+    with:
+      service-name: inventory-service
+      service-dir: inventory-service
+      ecr-repository: inventory-service
+      aws-region: us-east-1
+      needs-database: true
+    secrets: inherit
