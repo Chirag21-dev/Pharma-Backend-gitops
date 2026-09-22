@@ -114,5 +114,49 @@ jobs:
       with:
           category: /language:java
 
+    - name: OWASP Dependency Check (CVSS ≥ 7.0 — advisory; non-blocking)
+      if: false
+      continue-on-error: true
+      run: |
+          cd ${{ inputs.service-dir }}
+          mvn org.owasp:dependency-check-maven:check \
+            -DfailBuildOnCVSS=7 \
+            -DenableRetired=true \
+            -DdataDirectory=$HOME/.owasp/dependency-check-data \
+            -Dformat=HTML \
+            --no-transfer-progress
+
+    - name: Upload Dependency Check report
+      if: false
+      uses: actions/upload-artifact@v4
+      with:
+          name: depcheck-${{ inputs.service-name }}
+          path: ${{ inputs.service-dir }}/target/dependency-check-report.html
+          retention-days: 14
+    - name: Configure AWS credentials (OIDC)
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/pharma-github-actions-role
+          aws-region: ${{ inputs.aws-region }}
+
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+      # ── Docker build (multi-stage, non-root UID/GID 1000) ─────────────────────
+    - name: Build Docker image
+      id: docker-build
+      run: |
+          IMAGE="${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr-repository }}:${{ steps.meta.outputs.image_tag }}"
+          cd ${{ inputs.service-dir }}
+          docker build \
+            --build-arg UID=1000 \
+            --build-arg GID=1000 \
+            -t "$IMAGE" \
+            .
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+
     
     
