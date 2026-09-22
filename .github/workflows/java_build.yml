@@ -73,18 +73,33 @@ jobs:
     - name: Start PostgreSQL (integration tests)
       if: ${{ inputs.needs-database }}
       run: |
-          docker run -d \
-            --name testdb \
-            -e POSTGRES_DB=testdb \
-            -e POSTGRES_USER=testuser \
-            -e POSTGRES_PASSWORD=testpass \
-            -p 5432:5432 \
-            postgres:15-alpine
-          echo "Waiting for PostgreSQL to be ready..."
-          until docker exec testdb pg_isready -U testuser 2>/dev/null; do
-            sleep 2
-          done
-          echo "PostgreSQL is ready."
+        docker run -d \
+        --name testdb \
+        -e POSTGRES_DB=testdb \
+        -e POSTGRES_USER=testuser \
+        -e POSTGRES_PASSWORD=testpass \
+        -p 5432:5432 \
+        postgres:15-alpine
+
+        echo "Waiting for PostgreSQL to be ready..."
+        until docker exec testdb pg_isready -U testuser 2>/dev/null; do
+        sleep 2
+        done
+
+        echo "PostgreSQL is ready."
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: java
+        queries: security-extended
+
+    - name: Maven verify (tests + JaCoCo coverage gate ≥ 80%)
+      run: cd ${{ inputs.service-dir }} && mvn verify --no-transfer-progress
+      env:
+          SPRING_DATASOURCE_URL:      ${{ inputs.needs-database && 'jdbc:postgresql://localhost:5432/testdb' || '' }}
+          SPRING_DATASOURCE_USERNAME: ${{ inputs.needs-database && 'testuser' || '' }}
+          SPRING_DATASOURCE_PASSWORD: ${{ inputs.needs-database && 'testpass' || '' }}
 
     
     
