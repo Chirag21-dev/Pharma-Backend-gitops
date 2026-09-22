@@ -70,5 +70,21 @@ jobs:
           distribution: temurin
           cache: maven
 
+    - name: Start PostgreSQL (integration tests)
+      if: ${{ inputs.needs-database }}
+      run: |
+          docker run -d \
+            --name testdb \
+            -e POSTGRES_DB=testdb \
+            -e POSTGRES_USER=testuser \
+            -e POSTGRES_PASSWORD=testpass \
+            -p 5432:5432 \
+            postgres:15-alpine
+          echo "Waiting for PostgreSQL to be ready..."
+          until docker exec testdb pg_isready -U testuser 2>/dev/null; do
+            sleep 2
+          done
+          echo "PostgreSQL is ready."
+
     
     
