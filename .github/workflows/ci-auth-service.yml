@@ -20,7 +20,7 @@ jobs:
 
   build:
     name: Build & Security Gates
-    uses: ./.github/workflows/_java-build.yml
+    uses: ./.github/workflows/java_build.yml
     with:
       service-name: auth-service
       service-dir: auth-service
