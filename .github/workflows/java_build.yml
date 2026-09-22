@@ -174,6 +174,16 @@ jobs:
           sarif_file: trivy-results.sarif
           category: trivy-${{ inputs.service-name }}
 
+    - name: Push image to ECR
+      id: push
+      run: |
+          IMAGE="${{ steps.docker-build.outputs.image }}"
+          docker push "$IMAGE"
+          # Capture the content-addressable digest for immutable signing reference
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE" | awk -F@ '{print $2}')
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+          echo "Pushed: $IMAGE  (digest: $DIGEST)"
+
 
     
     
