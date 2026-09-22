@@ -101,5 +101,13 @@ jobs:
           SPRING_DATASOURCE_USERNAME: ${{ inputs.needs-database && 'testuser' || '' }}
           SPRING_DATASOURCE_PASSWORD: ${{ inputs.needs-database && 'testpass' || '' }}
 
+    - name: Upload JaCoCo coverage report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+          name: coverage-${{ inputs.service-name }}
+          path: ${{ inputs.service-dir }}/target/site/jacoco/
+          retention-days: 7
+
     
     
